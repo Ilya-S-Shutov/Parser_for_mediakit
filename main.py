@@ -1,4 +1,5 @@
 import re
+import os
 
 from bs4 import BeautifulSoup
 from fake_headers import Headers
@@ -7,9 +8,13 @@ import requests
 import utils as u
 
 
-def get_copy_websites():
+def get_copy_websites() -> None:
+    """
+    Сохраняет локальную копию web-страницы, чтобы не перегружать многочисленными запросами сервер.
+    :return: None
+    """
     url = 'https://mediakit.iportal.ru/our-team'
-
+    print('Загрузка страницы...')
     headers = Headers(browser='chrome', os='win', headers=True)
     req = requests.get(url, headers=headers.generate())
 
@@ -20,13 +25,23 @@ def get_copy_websites():
             file.write(src)
 
 
-def del_invisible_tags(soup: BeautifulSoup):
+def del_invisible_tags(soup: BeautifulSoup) -> None:
+    """
+    Удаление скрытых элементов страницы.
+    :param soup: дерево объектов обрабатываемой html-страницы.
+    :return: None
+    """
     del_tuple = ('3995684841599793822858', '4090665631599793822858', '3995684841599793822884', '4090665631599793822884')
     for index in del_tuple:
         u.del_invisible_on_id(soup, index)
 
 
-def parse_supervisors(soup: BeautifulSoup):
+def parse_supervisors(soup: BeautifulSoup) -> None:
+    """
+    Парсинг руководителей отделов.
+    :param soup: дерево объектов обрабатываемой html-страницы.
+    :return: None
+    """
     supervisors = soup.find_all('div', class_='t544__content t-valign_middle')
     for supervisor in supervisors:
         person = u.person_dict.copy()
@@ -37,7 +52,12 @@ def parse_supervisors(soup: BeautifulSoup):
         # print(person)
 
 
-def parse_common(soup: BeautifulSoup):
+def parse_common(soup: BeautifulSoup) -> None:
+    """
+    Парсинг сотрудников.
+    :param soup: дерево объектов обрабатываемой html-страницы.
+    :return: None
+    """
     # blocks = soup.find_all(field=re.compile(r'tn_text\w+'))
     blocks = soup.find_all('div', class_=re.compile('artboard'))
 
@@ -79,7 +99,12 @@ def parse_common(soup: BeautifulSoup):
                     # print(person_right)
 
 
-def parse_dev(soup: BeautifulSoup):
+def parse_dev(soup: BeautifulSoup) -> None:
+    """
+    Парсинг отдела разработки.
+    :param soup: дерево объектов обрабатываемой html-страницы.
+    :return: None
+    """
     develops = soup.find_all('div', class_='t527__wrapperleft')
     for develop in develops:
         person = u.person_dict.copy()
@@ -89,9 +114,15 @@ def parse_dev(soup: BeautifulSoup):
         # print(person)
 
 
-def main():
-    get_copy_websites()
+def main() -> None:
+    if os.path.exists(os.path.join('temp', 'index.html')):
+        ans = input('1 — Обновить файл\n2 — Работа с существующей локальной копией\n')
+        if ans == '1':
+            get_copy_websites()
+    else:
+        get_copy_websites()
 
+    print('Начало обработки!')
     src = u.read_file()
     soup = BeautifulSoup(src, 'lxml')
     u.create_new_table()
